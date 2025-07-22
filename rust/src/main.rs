@@ -1,6 +1,6 @@
 #![allow(unused)]
 use bitcoin::hex::DisplayHex;
-use bitcoincore_rpc::bitcoin::{Amount, Network};
+use bitcoincore_rpc::bitcoin::{Address, Amount, Network};
 use bitcoincore_rpc::{Auth, Client, RpcApi};
 use serde::Deserialize;
 use serde_json::json;
@@ -9,7 +9,7 @@ use std::io::Write;
 
 // Node access params
 const RPC_URL: &str = "http://127.0.0.1:18443"; // Default regtest RPC port
-const RPC_USER: &str = "kahira";
+const RPC_USER: &str = "alice";
 const RPC_PASS: &str = "password";
 
 // You can use calls not provided in RPC lib API using the generic `call` function.
@@ -97,6 +97,29 @@ fn main() -> bitcoincore_rpc::Result<()> {
     let _ = rpc.generate_to_address(1, &miner_addr)?;
 
     // Extract all required transaction details
+    let raw_tx = rpc.get_raw_transaction_info(&txid, None)?;
+    let decoded_tx = raw_tx.transaction().unwrap();
+    let blockhash = raw_tx.blockhash.unwrap();
+    let block = rpc.get_block_info(&blockhash)?;
+    let block_height = block.height;
+
+    let input = &decoded_tx.input[0];
+    let prev_tx = rpc.get_raw_transaction_info(&input.previous_output.txid, None)?;
+    let prev_tx_out = &prev_tx.transaction().unwrap().output[input.previous_output.vout as usize];
+    let input_amount = prev_tx_out.value;
+    let input_address = Address::from_script(&prev_tx_out.script_pubkey, Network::Regtest).unwrap();
+
+    let mut trader_output = None;
+    let mut change_output = None;
+    for output in &decoded_tx.output {
+        let addr = Address::from_script(&output.script_pubkey, Network::Regtest).unwrap();
+        if addr == trader_addr {
+            trader_output = Some((addr.to_string(), output.value));
+        } else {
+            change_output = Some((addr.to_string(), output.value));
+        }
+    }
+    let fee = input_amount - trader_output.as_ref().unwrap().1 - change_output.as_ref().unwrap().1;
 
     // Write the data to ../out.txt in the specified format given in readme.md
 
