@@ -46,8 +46,8 @@ fn main() -> bitcoincore_rpc::Result<()> {
     println!("Blockchain Info: {blockchain_info:?}");
 
     // Create/Load the wallets, named 'Miner' and 'Trader'. Have logic to optionally create/load them if they do not exist or not loaded already.
-    let _ = rpc.create_wallet("Miner", Some(false), Some(true), None, None);
-    let _ = rpc.create_wallet("Trader", Some(false), Some(true), None, None);
+    let _ = rpc.create_wallet("Miner", Some(false), Some(false), None, None);
+    let _ = rpc.create_wallet("Trader", Some(false), Some(false), None, None);
 
     let miner_rpc = Client::new(
         "http://127.0.0.1:18443/wallet/Miner",
@@ -122,6 +122,27 @@ fn main() -> bitcoincore_rpc::Result<()> {
     let fee = input_amount - trader_output.as_ref().unwrap().1 - change_output.as_ref().unwrap().1;
 
     // Write the data to ../out.txt in the specified format given in readme.md
+
+    let miner_addr = input_address.to_string();
+    let miner_input_amount = input_amount.to_btc();
+    let trader_addr = trader_output.as_ref().unwrap().0.clone();
+    let trader_output_amount = trader_output.as_ref().unwrap().1.to_btc();
+    let miner_change_address = change_output.as_ref().unwrap().0.clone();
+    let miner_change_amount = change_output.as_ref().unwrap().1.to_btc();
+    let fee = fee.to_btc();
+
+    let mut file = File::create("../out.txt")?;
+    println!("{txid}");
+    writeln!(file, "{txid}")?;
+    writeln!(file, "{miner_addr}")?;
+    writeln!(file, "{miner_input_amount:.8}")?;
+    writeln!(file, "{trader_addr}")?;
+    writeln!(file, "{trader_output_amount:.8}")?;
+    writeln!(file, "{miner_change_address}")?;
+    writeln!(file, "{miner_change_amount:.8}")?;
+    writeln!(file, "{fee:.8}")?;
+    writeln!(file, "{block_height}")?;
+    writeln!(file, "{blockhash}")?;
 
     Ok(())
 }
