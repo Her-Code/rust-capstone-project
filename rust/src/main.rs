@@ -64,10 +64,14 @@ fn main() -> bitcoincore_rpc::Result<()> {
         .map_err(std::io::Error::other)?;
 
     let blocks = rpc.generate_to_address(103, &mine_addr)?;
-
+    // Mine 103 blocks to make balance spendable
     let miner_balance = miner_rpc.get_balance(None, None)?;
     println!("Miner balance: {} BTC", miner_balance.to_btc());
     // Load Trader wallet and generate a new address
+    let trader_addr = trader_rpc
+        .get_new_address("Received".into(), None)?
+        .require_network(Network::Regtest)
+        .unwrap();
 
     // Send 20 BTC from Miner to Trader
 
