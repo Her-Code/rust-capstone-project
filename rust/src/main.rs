@@ -9,7 +9,7 @@ use std::io::Write;
 
 // Node access params
 const RPC_URL: &str = "http://127.0.0.1:18443"; // Default regtest RPC port
-const RPC_USER: &str = "alice";
+const RPC_USER: &str = "kahira";
 const RPC_PASS: &str = "password";
 
 // You can use calls not provided in RPC lib API using the generic `call` function.
@@ -43,7 +43,7 @@ fn main() -> bitcoincore_rpc::Result<()> {
 
     // Get blockchain info
     let blockchain_info = rpc.get_blockchain_info()?;
-    println!("Blockchain Info: {:?}", blockchain_info);
+    println!("Blockchain Info: {blockchain_info:?}");
 
     // Create/Load the wallets, named 'Miner' and 'Trader'. Have logic to optionally create/load them if they do not exist or not loaded already.
 
