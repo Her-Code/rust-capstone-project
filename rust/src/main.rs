@@ -1,6 +1,6 @@
 #![allow(unused)]
 use bitcoin::hex::DisplayHex;
-use bitcoincore_rpc::bitcoin::Amount;
+use bitcoincore_rpc::bitcoin::{Amount, Network};
 use bitcoincore_rpc::{Auth, Client, RpcApi};
 use serde::Deserialize;
 use serde_json::json;
@@ -46,9 +46,27 @@ fn main() -> bitcoincore_rpc::Result<()> {
     println!("Blockchain Info: {blockchain_info:?}");
 
     // Create/Load the wallets, named 'Miner' and 'Trader'. Have logic to optionally create/load them if they do not exist or not loaded already.
+    let _ = rpc.create_wallet("Miner", Some(false), Some(true), None, None);
+    let _ = rpc.create_wallet("Trader", Some(false), Some(true), None, None);
 
+    let miner_rpc = Client::new(
+        "http://127.0.0.1:18443/wallet/Miner",
+        Auth::UserPass(RPC_USER.to_string(), RPC_PASS.to_string()),
+    )?;
+    let trader_rpc = Client::new(
+        "http://127.0.0.1:18443/wallet/Trader",
+        Auth::UserPass(RPC_USER.to_string(), RPC_PASS.to_string()),
+    )?;
     // Generate spendable balances in the Miner wallet. How many blocks needs to be mined?
+    let mine_addr = miner_rpc
+        .get_new_address("Mining Reward".into(), None)?
+        .require_network(bitcoincore_rpc::bitcoin::Network::Regtest)
+        .map_err(std::io::Error::other)?;
 
+    let blocks = rpc.generate_to_address(103, &mine_addr)?;
+
+    let miner_balance = miner_rpc.get_balance(None, None)?;
+    println!("Miner balance: {} BTC", miner_balance.to_btc());
     // Load Trader wallet and generate a new address
 
     // Send 20 BTC from Miner to Trader
