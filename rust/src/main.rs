@@ -58,12 +58,12 @@ fn main() -> bitcoincore_rpc::Result<()> {
         Auth::UserPass(RPC_USER.to_string(), RPC_PASS.to_string()),
     )?;
     // Generate spendable balances in the Miner wallet. How many blocks needs to be mined?
-    let mine_addr = miner_rpc
+    let miner_addr = miner_rpc
         .get_new_address("Mining Reward".into(), None)?
         .require_network(bitcoincore_rpc::bitcoin::Network::Regtest)
         .map_err(std::io::Error::other)?;
 
-    let blocks = rpc.generate_to_address(103, &mine_addr)?;
+    let blocks = rpc.generate_to_address(103, &miner_addr)?;
     // NOTE: Coinbase rewards take 100 blocks to mature
     // Therefore, mining must continue until at least 100 blocks are generated before the reward is spendable.
     // Mine 103 blocks to make balance spendable
@@ -94,6 +94,7 @@ fn main() -> bitcoincore_rpc::Result<()> {
     println!("Unconfirmed TX: {mempool_tx:?}");
 
     // Mine 1 block to confirm the transaction
+    let _ = rpc.generate_to_address(1, &miner_addr)?;
 
     // Extract all required transaction details
 
