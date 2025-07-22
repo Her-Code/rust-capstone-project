@@ -64,9 +64,12 @@ fn main() -> bitcoincore_rpc::Result<()> {
         .map_err(std::io::Error::other)?;
 
     let blocks = rpc.generate_to_address(103, &mine_addr)?;
+    // NOTE: Coinbase rewards take 100 blocks to mature
+    // Therefore, mining must continue until at least 100 blocks are generated before the reward is spendable.
     // Mine 103 blocks to make balance spendable
     let miner_balance = miner_rpc.get_balance(None, None)?;
     println!("Miner balance: {} BTC", miner_balance.to_btc());
+
     // Load Trader wallet and generate a new address
     let trader_addr = trader_rpc
         .get_new_address("Received".into(), None)?
@@ -74,8 +77,21 @@ fn main() -> bitcoincore_rpc::Result<()> {
         .unwrap();
 
     // Send 20 BTC from Miner to Trader
+    let txid = miner_rpc.send_to_address(
+        &trader_addr,
+        Amount::from_btc(20.0).unwrap(),
+        None,
+        None,
+        None,
+        None,
+        None,
+        None,
+    )?;
+    println!("Sent TXID: {txid}");
 
     // Check transaction in mempool
+    let mempool_tx = rpc.get_mempool_entry(&txid)?;
+    println!("Unconfirmed TX: {mempool_tx:?}");
 
     // Mine 1 block to confirm the transaction
 
